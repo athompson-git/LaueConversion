@@ -92,4 +92,4 @@ class LaueCrystal:
         C2 = 1 - exp(1j * (self.eta(0, e) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma))*self.N)
         D1 = self.eta(0, e) - self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
         D2 = self.eta(0, e) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
-        return sqrt(absolute(A * ((1 + B) * (C1 / D1) + (1 - B) * (C2 / D2))))
+        return np.power(absolute(A * ((1 + B) * (C1 / D1) + (1 - B) * (C2 / D2))), 2)
