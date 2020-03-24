@@ -9,13 +9,13 @@ alpha = 1/137  # fine structure constant
 
 class LaueCrystal:
     def __init__(self, thickness=5e10, proton_number=32, planar_dist=2.83,
-                 reciprocal_lattice=6.2, bragg_angle=0.16, lattice=(1,1,1)):
-        self.r = planar_dist
-        self.qt = reciprocal_lattice
+                 reciprocal_lattice=6.2, bragg_angle=0.16, lattice=(2,2,0)):
+        self.r = planar_dist  # keV^-1
+        self.qt = reciprocal_lattice  # keV
         self.z = proton_number
-        self.h = thickness
-        self.bragg = bragg_angle
-        self.lattice = lattice
+        self.h = thickness  # total crystal thickness in keV^-1
+        self.bragg = bragg_angle  # radians
+        self.lattice = lattice  # tuplet of basis vectors, e.g. (2,2,0) for the Ge lattice.
         self.N = self.h / self.r
         self.V = self.r ** 3
         self.fc = self.get_fc(lattice)

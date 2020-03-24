@@ -6,7 +6,7 @@ from laue import LaueCrystal
 lc = LaueCrystal()
 
 
-ma_array = np.linspace(1.8, 2, 1000)
+ma_array = np.linspace(0, 10, 1000)
 p_array = np.zeros(ma_array.shape[0])
 
 for i in range(0, ma_array.shape[0]):
