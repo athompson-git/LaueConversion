@@ -2,24 +2,29 @@ import numpy as np
 from numpy import pi, sqrt, exp, sin, cos, arccos, absolute
 
 # Constants
-r_e = 0.14  # classical electron radius in keV
-alpha = 1/137  # fine structure constant
+alpha = 1/137.035999084  # fine structure constant
+keV_cm = 1.98e-8  # 1 cm^-1 = 1.98e-11 keV
+r_e = (2.81794e-13)/keV_cm  # classical electron radius in keV^-1
+me = 510.99895000  # keV
 
 
 
 class LaueCrystal:
-    def __init__(self, thickness=5e10, proton_number=6, planar_dist=2.83,
-                 reciprocal_lattice=6.2, bragg_angle=0.16, lattice=(2,2,0)):
-        self.r = planar_dist  # keV^-1
-        self.qt = reciprocal_lattice  # keV
+    # Default is C(220)
+    def __init__(self, thickness=1, proton_number=6, plasma_freq=38,
+                 bragg_angle=0.2478368, reciprocal_lattice=9.812297, lattice=(2,2,0)):
+        self.qt = reciprocal_lattice  # reciprocal lattice spacing, keV
         self.z = proton_number
-        self.h = thickness  # total crystal thickness in keV^-1
+        self.h = thickness / keV_cm  # total crystal thickness given in cm converted to keV^-1
         self.bragg = bragg_angle  # radians
-        self.lattice = lattice  # tuplet of basis vectors, e.g. (2,2,0) for the Ge lattice.
-        self.N = self.h / self.r
-        self.V = self.r ** 3
+        self.lattice = lattice  # tuplet of Miller indices, e.g. (2,2,0) for the Diamond lattice.
+        self.m_gamma = plasma_freq/1000  # plasma_freq in eV
         self.fc = self.get_fc(lattice)
-        self.M = self.fc * self.r / self.V
+        self.V = self.get_volume_from_mg()
+        self.M = self.get_fc(lattice) / self.get_volume_from_mg()
+    
+    def get_volume_from_mg(self):
+        return (4*pi*r_e*self.fc*self.z) / self.m_gamma**2
     
     def get_fc(self, lattice):
         m4 = lattice[0] + lattice[1] + lattice[2]
@@ -35,63 +40,65 @@ class LaueCrystal:
             return 0
 
     def q(self, t, e):
-        return 4*pi*e*sin(2*t)
+        return 4*pi*e*sin(t)
     
     def gamam_ff(self, q):
         parameters = get_ff_params(self.z)
         a1 = parameters[0]
-        a2 = parameters[1]
-        a3 = parameters[2]
-        a4 = parameters[3]
-        b1 = parameters[4]
-        b2 = parameters[5]
-        b3 = parameters[6]
+        b1 = parameters[1]
+        a2 = parameters[2]
+        b2 = parameters[3]
+        a3 = parameters[4]
+        b3 = parameters[5]
+        a4 = parameters[6]
         b4 = parameters[7]
         c = parameters[8]
-        return a1*exp(-b1*(q/(4*pi)**2)) + a2*exp(-b2*(q/(4*pi)**2)) \
-                + a3*exp(-b3*(q/(4*pi)**2)) + a4*exp(-b4*(q/(4*pi)**2)) + c
+        return a1*exp(-b1*(q/(4*pi))**2) + a2*exp(-b2*(q/(4*pi))**2) \
+                + a3*exp(-b3*(q/(4*pi))**2) + a4*exp(-b4*(q/(4*pi))**2) + c
 
-    def atomic_ff(self, q, ma):
-        return (2*ma*alpha*(self.z - self.gamam_ff(q))) / q
+    def atomic_ff(self, q, e, ma):
+        return ((e**2 - ma**2)*sqrt(4*pi*alpha)*(self.z - self.gamam_ff(q))) / q**2
 
-    def eta(self, t, e):
-        q = self.q(t, e)
+    def eta(self, t, e, ma):
+        q = self.q(t, e) #self.q(t + self.theta_as(t, e, ma), e)
         return r_e * self.M * self.gamam_ff(q) / (e * cos(self.bragg))
 
     def dphi_gamma(self, t, e, ma):
-        return -(self.r / 2) * (2*self.qt*(e * sin(t) - 0.5 * self.qt)) / (2 * e * cos(t))
+        return -0.5 * (2*self.qt*(e * sin(t) - 0.5 * self.qt)) / (2 * e * cos(t))
 
     def dphi_a(self, t, e, ma):
-        return (self.r / 2) * (ma**2 - 2*self.qt*(e * sin(t) - 0.5 * self.qt)) / (2 * e * cos(t))
+        return 0.5 * (ma**2 - 2*self.qt*(e * sin(t) - 0.5 * self.qt)) / (2 * e * cos(t))
 
     def u(self, t, e, ma):
-        return sqrt(self.eta(t, e)**2 + self.dphi_gamma(t, e, ma)**2)
+        return sqrt(self.eta(t, e, ma)**2 + self.dphi_gamma(t, e, ma)**2)
 
     def phi_as(self, t, e, ma):
-        return self.r * sqrt(e**2 - ma**2 - (self.qt - e**sin(t)**2))
+        return sqrt(e**2 - ma**2 - (self.qt - e**sin(t))**2)
 
     def theta_as(self, t, e, ma):
-        return arccos((self.phi_as(t, e, ma))/(self.r * sqrt(e**2 - ma**2)))
+        return arccos((self.phi_as(t, e, ma))/(sqrt(e**2 - ma**2)))
     
     def zeta(self, g, t, e, ma):
-        q = self.q(t, e)
-        return g * self.M * self.atomic_ff(q, ma) * self.r * sqrt(e**2 - ma**2) \
+        q = self.q(t, e) #self.q(t + self.theta_as(t, e, ma), e)
+        return g * self.M * self.atomic_ff(q, e, ma) * sqrt(e**2 - ma**2) \
                * sin(t + self.theta_as(t, e, ma)) / (4*pi*e*self.phi_as(t, e, ma))
     
     def conversion_probability(self, g, t, e, ma):
         if e < ma:
             print("E < ma! You idiot...")
             return 1
-        A = -0.5 * self.zeta(g, t, e, ma) * exp(-1j * self.N * self.phi_as(t, e, ma))
+        A = -0.5 * self.zeta(g, t, e, ma) * exp(-1j * self.h * self.phi_as(t, e, ma))
         B = self.dphi_gamma(t, e, ma) / self.u(t, e, ma)
-        C1 = 1 - exp(1j * (self.eta(0, e) - self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma))*self.N)
-        C2 = 1 - exp(1j * (self.eta(0, e) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma))*self.N)
-        D1 = self.eta(0, e) - self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
-        D2 = self.eta(0, e) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
+        C1 = 1 - exp(1j * (self.eta(0, e, ma) - self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma))*self.h)
+        C2 = 1 - exp(1j * (self.eta(0, e, ma) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma))*self.h)
+        D1 = self.eta(0, e, ma) - self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
+        D2 = self.eta(0, e, ma) + self.u(t, e, ma) + self.dphi_gamma(t, e, ma) - 2*self.dphi_a(t, e, ma)
         return np.power(absolute(A * ((1 + B) * (C1 / D1) + (1 - B) * (C2 / D2))), 2)
 
 
 
+# Atomic form factor parameters from fits taken from
+# http://lampx.tugraz.at/~hadley/ss1/crystaldiffraction/atomicformfactors/formfactors.php
 def get_ff_params(z):
     if (z not in (1, 32, 6, 55)):
         print("Element not found. You must enter it in by hand.")
