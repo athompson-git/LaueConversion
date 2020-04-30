@@ -59,7 +59,7 @@ class LaueCrystal:
 
     def axion_ff(self, q, e, ma):
         ff0 = sqrt(4*pi*alpha) * self.z * (e**2 - ma**2) * (2.275*bohr_radius/6)
-        return min(ff0, ((e**2 - ma**2)*sqrt(4*pi*alpha)*(self.z - self.gamma_ff(q))) / q**2)
+        return min(ff0, ((e**2 - ma**2)*sqrt(4*pi*alpha)*(self.z - self.gamma_ff(q))) / q**2) # regularize the form factor at low q
 
     def eta(self, t, e, ma):
         q = self.qt
