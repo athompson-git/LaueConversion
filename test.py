@@ -21,6 +21,7 @@ for i in range(0, p_ma_array.shape[0]):
 
 
 plt.plot(1000*ma_array, p_ma_array, label="E = 20")
+plt.title(r"$E_\gamma = 20$ keV, $g_{a\gamma\gamma} = 10^{-3}$ GeV$^{-1}$, Bragg condition", loc="right")
 plt.xlabel(r"$m_a$ [eV]")
 plt.ylabel(r"$P_{\gamma \to a}$")
 plt.yscale("log")
