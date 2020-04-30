@@ -96,7 +96,7 @@ class LaueCrystal:
     
     def conversion_probability(self, g, t, e, ma):
         if e < ma:
-            print("E < ma! You idiot...")
+            print("E < ma!...")
             return 1
         A = -0.5 * self.zeta(g, t, e, ma) * exp(-1j * self.h * self.phi_as(t, e, ma))
         B = self.dphi_gamma(t, e, ma) / self.u(t, e, ma)
