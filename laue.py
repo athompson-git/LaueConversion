@@ -62,7 +62,7 @@ class LaueCrystal:
         return min(ff0, ((e**2 - ma**2)*sqrt(4*pi*alpha)*(self.z - self.gamma_ff(q))) / q**2)
 
     def eta(self, t, e, ma):
-        q = self.q(t, self.theta_as(t, e, ma), e, sqrt(e**2 - ma**2))
+        q = self.qt
         return r_e * self.M * self.gamma_ff(q) / (e * cos(self.bragg))
     
     def eta0(self, e):
@@ -90,7 +90,7 @@ class LaueCrystal:
         return (self.qt - e**sin(t)) / sqrt(e**2 - ma**2)
     
     def zeta(self, g, t, e, ma):
-        q = self.q(t, self.theta_as(t, e, ma), e, sqrt(e**2 - ma**2))
+        q = self.qt
         sin_sum = sin(t)*self.cos_as(t, e, ma) + cos(t)*self.sin_as(t, e, ma)
         return g * self.M * self.axion_ff(q, e, ma) * sin_sum / ((4*pi*e*self.phi_as(t, e, ma)))
     
