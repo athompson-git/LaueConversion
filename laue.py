@@ -1,9 +1,15 @@
+# Laue conversion of Xrays into ALPs by a single crystal.
+# Based on work by Yamaji, Yamazaki, Tamasaku, and Namba (Phys. Rev. D. 96, 115001 (2017))
+# arXiv: 1709.03299
+
+
 import numpy as np
 from numpy import pi, sqrt, exp, sin, cos, arccos, absolute
 
 # Constants
 alpha = 1/137.035999084  # fine structure constant
 keV_cm = 1.98e-8  # 1 cm^-1 = 1.98e-11 keV
+keV_A = 1.98  # keV angstrom
 me = 510.99895000  # keV
 r_e = alpha / me # classical electron radius in keV^-1
 bohr_radius = 1/(me * alpha)
@@ -44,6 +50,8 @@ class LaueCrystal:
         return k_gamma * sin(theta_gamma) + k_a * sin(theta_a)
     
     def gamma_ff(self, q):
+        # convert q in keV to angstrom^-1
+        q = q/keV_A
         parameters = get_ff_params(self.z)
         a1 = parameters[0]
         b1 = parameters[1]
@@ -63,10 +71,10 @@ class LaueCrystal:
 
     def eta(self, t, e, ma):
         q = self.qt
-        return r_e * self.M * self.gamma_ff(q) / (e * cos(self.bragg))
+        return 2*pi*r_e * self.M * self.gamma_ff(q) / (e * cos(self.bragg))
     
     def eta0(self, e):
-        return r_e * self.M * self.z / (e * cos(self.bragg))
+        return 2*pi*r_e * self.M * self.z / (e * cos(self.bragg))
 
     def dphi_gamma(self, t, e, ma):
         return -0.5 * (2*self.qt*(e * sin(t) - 0.5 * self.qt)) / (2 * e * cos(t))
@@ -92,7 +100,7 @@ class LaueCrystal:
     def zeta(self, g, t, e, ma):
         q = self.qt
         sin_sum = sin(t)*self.cos_as(t, e, ma) + cos(t)*self.sin_as(t, e, ma)
-        return g * self.M * self.axion_ff(q, e, ma) * sin_sum / ((4*pi*e*self.phi_as(t, e, ma)))
+        return 2*pi*g * self.M * self.axion_ff(q, e, ma) * sin_sum / ((4*pi*e*self.phi_as(t, e, ma)))
     
     def conversion_probability(self, g, t, e, ma):
         if e < ma:
