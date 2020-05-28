@@ -8,7 +8,7 @@ from numpy import pi, sqrt, exp, sin, cos, arccos, absolute
 
 # Constants
 alpha = 1/137.035999084  # fine structure constant
-keV_cm = 1.98e-8  # 1 cm^-1 = 1.98e-11 keV
+keV_cm = 1.98e-8  # 1 cm^-1 = 1.98e-8 keV
 keV_A = 1.98  # keV angstrom
 me = 510.99895000  # keV
 r_e = alpha / me # classical electron radius in keV^-1
